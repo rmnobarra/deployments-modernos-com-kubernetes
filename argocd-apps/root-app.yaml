@@ -10,7 +10,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/SEU_USER/deployments-modernos-com-kubernetes.git
+    repoURL: https://github.com/rmnobarra/deployments-modernos-com-kubernetes.git
     targetRevision: main
     path: argocd-apps   # Diretório que contém as Applications "filhas"
   destination:
