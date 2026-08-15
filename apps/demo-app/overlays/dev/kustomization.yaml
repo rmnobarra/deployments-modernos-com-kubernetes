@@ -1,0 +1,37 @@
+# overlays/dev/kustomization.yaml
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Referência à base
+resources:
+  - ../../base
+
+# Namespace específico do ambiente
+namespace: dev
+
+# Prefixo para evitar colisão de nomes entre ambientes
+namePrefix: dev-
+
+# Labels que identificam o ambiente
+labels:
+  - includeSelectors: false
+    pairs:
+      environment: dev
+
+# Aponta para o arquivo de patch criado acima
+patches:
+  - path: deployment-patch.yaml
+    target:
+      kind: Deployment
+      name: demo-app
+
+# ConfigMap gerado pelo Kustomize a partir de literais.
+# O generator adiciona um sufixo de hash ao nome (demo-app-config-t9fk2m6d8b):
+# quando o conteúdo muda, o nome muda, o Deployment enxerga um volume novo
+# e reinicia os pods sozinho. É rollout automático em mudança de config.
+configMapGenerator:
+  - name: demo-app-config
+    literals:
+      - LOG_LEVEL=debug
+      - ENVIRONMENT=development
+      - FEATURE_FLAG_NEW_UI=true

@@ -1,0 +1,20 @@
+# base/kustomization.yaml
+# Kustomization base - define os recursos comuns
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Recursos que fazem parte desta base
+resources:
+  - deployment.yaml
+  - service.yaml
+
+# Labels comuns aplicadas a TODOS os recursos.
+# ATENÇÃO: `commonLabels` está deprecado desde o Kustomize v5. Use `labels`.
+# includeSelectors: false é CRÍTICO — se true (comportamento do antigo
+# commonLabels), a label também entra no `selector` do Deployment, que é um
+# campo IMUTÁVEL. Qualquer mudança de label depois exigiria recriar o workload.
+labels:
+  - includeSelectors: false
+    pairs:
+      managed-by: kustomize
+      part-of: deployments-modernos-com-kubernetes

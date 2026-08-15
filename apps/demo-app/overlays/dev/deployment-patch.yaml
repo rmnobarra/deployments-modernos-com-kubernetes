@@ -1,0 +1,21 @@
+# overlays/dev/deployment-patch.yaml
+# Só os campos que MUDAM em dev. Note que não repetimos imagem, probes,
+# portas — tudo isso vem da base. Os campos abaixo (apiVersion, kind e
+# metadata.name) existem apenas para o Kustomize saber QUAL recurso casar.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: demo-app
+spec:
+  replicas: 1              # dev: uma réplica basta
+  template:
+    spec:
+      containers:
+        - name: demo-app
+          resources:       # dev: recursos mínimos, é ambiente descartável
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi

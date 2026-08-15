@@ -1,0 +1,46 @@
+# base/deployment.yaml
+# Deployment base - valores que são comuns a TODOS os ambientes
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: demo-app
+  labels:
+    app: demo-app
+    # Labels adicionais serão injetadas pelo Kustomize via `labels`
+spec:
+  replicas: 1  # Valor default, será sobrescrito por overlay
+  selector:
+    matchLabels:
+      app: demo-app
+  template:
+    metadata:
+      labels:
+        app: demo-app
+    spec:
+      containers:
+        - name: demo-app
+          image: rmnobarra/gitops-demo:1.0.0  # Imagem base, pode ser sobrescrita
+          ports:
+            - containerPort: 80
+              name: http
+          # Probes são definidas na base - todo ambiente precisa delas
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          # Resources mínimos na base, overlays de prod aumentam
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 200m
+              memory: 256Mi

@@ -1,0 +1,13 @@
+# overlays/prod/pdb.yaml
+# Recurso NOVO, exclusivo de prod — não é patch da base.
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: demo-app
+spec:
+  # Com replicas: 3, garante que no máximo 1 pod fique indisponível
+  # durante drain de node ou rolling update
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: demo-app

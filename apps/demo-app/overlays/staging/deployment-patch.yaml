@@ -1,0 +1,18 @@
+# overlays/staging/deployment-patch.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: demo-app
+spec:
+  replicas: 2
+  template:
+    spec:
+      containers:
+        - name: demo-app
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 200m
+              memory: 256Mi
