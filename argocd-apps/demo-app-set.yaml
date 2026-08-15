@@ -1,0 +1,40 @@
+# argocd-apps/demo-app-set.yaml
+# ApplicationSet que gera uma Application por ambiente
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: demo-app
+  namespace: argocd
+spec:
+  generators:
+    # List Generator: lista explícita de parâmetros
+    - list:
+        elements:
+          - env: dev
+            replicas: "1"
+            namespace: dev
+          - env: staging
+            replicas: "2"
+            namespace: staging
+          - env: prod
+            replicas: "3"
+            namespace: prod
+  template:
+    metadata:
+      name: 'demo-app-{{env}}'      # Gera: demo-app-dev, demo-app-staging, demo-app-prod
+      namespace: argocd
+    spec:
+      project: default
+      source:
+        repoURL: https://github.com/rmnobarra/deployments-modernos-com-kubernetes.git
+        targetRevision: main
+        path: 'apps/demo-app/overlays/{{env}}'
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: '{{namespace}}'
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
