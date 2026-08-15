@@ -1,0 +1,22 @@
+# argocd-apps/root-app.yaml
+# A Application "mãe" que gerencia todas as outras
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: root-apps
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/SEU_USER/deployments-modernos-com-kubernetes.git
+    targetRevision: main
+    path: argocd-apps   # Diretório que contém as Applications "filhas"
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd   # Applications são criadas no namespace do ArgoCD
+  syncPolicy:
+    automated:
+      prune: true       # Deletar app filha = remover YAML do diretório
+      selfHeal: true
