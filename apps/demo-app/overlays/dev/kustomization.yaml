@@ -42,7 +42,7 @@ configMapGenerator:
 
 images:
   - name: rmnobarra/gitops-demo
-    newTag: "1.0.0"
+    newTag: "1.0.1"
 
 # overlays/dev/kustomization.yaml — acrescenta isto ao que já
 # existe (patches: da Aula 06). Os índices steps.2 e steps.5 são os dois
