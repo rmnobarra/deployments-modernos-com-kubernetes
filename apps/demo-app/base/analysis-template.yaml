@@ -29,7 +29,8 @@ spec:
             sum(rate(
               nginx_ingress_controller_requests{
                 ingress="{{args.ingress-name}}",
-                canary!=""
+                canary!="",
+                status!~"4.."
               }[2m]
             ))
 
@@ -47,7 +48,8 @@ spec:
               sum(rate(
                 nginx_ingress_controller_request_duration_seconds_bucket{
                   ingress="{{args.ingress-name}}",
-                  canary!=""
+                  canary!="",
+                  status!~"4.."
                 }[2m]
               )) by (le)
             )
