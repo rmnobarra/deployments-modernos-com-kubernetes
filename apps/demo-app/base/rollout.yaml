@@ -65,8 +65,6 @@ spec:
             templates:
               - templateName: success-rate  # Referência ao AnalysisTemplate
             args:
-              - name: service-name
-                value: demo-app-canary
               - name: ingress-name
                 value: demo-app
         - setWeight: 25
@@ -75,8 +73,6 @@ spec:
             templates:
               - templateName: success-rate
             args:
-              - name: service-name
-                value: demo-app-canary
               - name: ingress-name
                 value: demo-app
         - setWeight: 50
