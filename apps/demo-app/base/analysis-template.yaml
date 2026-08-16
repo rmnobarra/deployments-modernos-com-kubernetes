@@ -8,6 +8,8 @@ spec:
   args:
     - name: service-name
       # Recebe o nome do service canary como argumento
+    - name: ingress-name
+      # Recebe o nome do Ingress (renomeado por ambiente pelo Kustomize)
   metrics:
     - name: success-rate
       # Intervalo entre medições
@@ -26,14 +28,14 @@ spec:
           query: |
             sum(rate(
               nginx_ingress_controller_requests{
-                ingress="demo-app",
+                ingress="{{args.ingress-name}}",
                 service="{{args.service-name}}",
                 status=~"[23].."
               }[2m]
             )) /
             sum(rate(
               nginx_ingress_controller_requests{
-                ingress="demo-app",
+                ingress="{{args.ingress-name}}",
                 service="{{args.service-name}}"
               }[2m]
             ))
@@ -55,7 +57,7 @@ spec:
             histogram_quantile(0.99,
               sum(rate(
                 nginx_ingress_controller_request_duration_seconds_bucket{
-                  ingress="demo-app",
+                  ingress="{{args.ingress-name}}",
                   service="{{args.service-name}}"
                 }[2m]
               )) by (le)

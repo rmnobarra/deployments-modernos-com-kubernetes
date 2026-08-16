@@ -55,6 +55,8 @@ replacements:
       - select: {kind: Rollout}
         fieldPaths:
           - spec.strategy.canary.trafficRouting.nginx.stableIngress
+          - spec.strategy.canary.steps.2.analysis.args.1.value
+          - spec.strategy.canary.steps.5.analysis.args.1.value
   - source: {kind: AnalysisTemplate, name: success-rate, fieldPath: metadata.name}
     targets:
       - select: {kind: Rollout}
