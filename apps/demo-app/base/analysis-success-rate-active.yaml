@@ -1,0 +1,60 @@
+# base/analysis-success-rate-active.yaml
+# Versão do success-rate da Aula 07 adaptada pro blue-green: sem filtro de
+# canary, porque o Ingress active nunca mistura duas versões.
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: success-rate-active
+spec:
+  args:
+    - name: ingress-name
+  metrics:
+    - name: success-rate
+      interval: 30s
+      count: 5
+      failureLimit: 1
+      # Mesma tolerância da Aula 07: se a query bater numa janela sem
+      # tráfego (denominador 0, resultado NaN), não bate nem com
+      # successCondition nem com failureCondition — vira Inconclusive. Aqui
+      # o risco é menor (o active recebe 100% do tráfego, não uma fatia),
+      # mas depende do gerador estar rodando o tempo todo; sem essa
+      # tolerância, um único hiccup do gerador já abortava a análise.
+      inconclusiveLimit: 2
+      successCondition: result[0] >= 0.95
+      failureCondition: result[0] < 0.90
+      provider:
+        prometheus:
+          address: http://monitoring-kube-prometheus-prometheus.monitoring.svc.cluster.local:9090
+          query: |
+            sum(rate(
+              nginx_ingress_controller_requests{
+                ingress="{{args.ingress-name}}",
+                status=~"[23].."
+              }[2m]
+            )) /
+            sum(rate(
+              nginx_ingress_controller_requests{
+                ingress="{{args.ingress-name}}",
+                status!~"4.."
+              }[2m]
+            ))
+
+    - name: latency-p99
+      interval: 30s
+      count: 5
+      failureLimit: 1
+      inconclusiveLimit: 2
+      successCondition: result[0] < 0.5
+      failureCondition: result[0] >= 1.0
+      provider:
+        prometheus:
+          address: http://monitoring-kube-prometheus-prometheus.monitoring.svc.cluster.local:9090
+          query: |
+            histogram_quantile(0.99,
+              sum(rate(
+                nginx_ingress_controller_request_duration_seconds_bucket{
+                  ingress="{{args.ingress-name}}",
+                  status!~"4.."
+                }[2m]
+              )) by (le)
+            )

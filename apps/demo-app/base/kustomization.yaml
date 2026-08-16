@@ -4,13 +4,16 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 # Recursos que fazem parte desta base
+# service-stable.yaml, service-canary.yaml, ingress.yaml e
+# analysis-template.yaml (canary, Aula 07) continuam no diretório — só
+# saem da lista. Trocar de estratégia de novo é só trocar de novo a lista.
 resources:
   - rollout.yaml
-  - service.yaml
-  - service-stable.yaml
-  - service-canary.yaml
-  - ingress.yaml
-  - analysis-template.yaml
+  - service.yaml                      # apex da Aula 03 — agora é o active
+  - service-preview.yaml              # novo — blue-green
+  - ingress-active.yaml               # novo — blue-green
+  - analysis-success-rate-active.yaml # novo — postPromotionAnalysis
+  - analysis-smoke-test.yaml          # novo — prePromotionAnalysis
 
 # Labels comuns aplicadas a TODOS os recursos.
 # ATENÇÃO: `commonLabels` está deprecado desde o Kustomize v5. Use `labels`.

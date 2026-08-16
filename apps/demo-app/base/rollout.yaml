@@ -42,42 +42,41 @@ spec:
               cpu: 200m
               memory: 256Mi
   strategy:
-    canary:
-      # Services para traffic split — nomes da BASE; o overlay corrige com
-      # namePrefix via replacements:, mais abaixo
-      canaryService: demo-app-canary
-      stableService: demo-app-stable
+    blueGreen:
+      # Service que recebe tráfego de produção
+      activeService: demo-app
+      # Service que recebe tráfego de preview (para testes)
+      previewService: demo-app-preview
 
-      # Traffic management via Nginx Ingress
-      trafficRouting:
-        nginx:
-          stableIngress: demo-app       # nome do Ingress da base
-          # Argo Rollouts cria automaticamente um Ingress canary
-          # com annotation nginx.ingress.kubernetes.io/canary-weight
-          additionalIngressAnnotations:
-            canary-by-header: X-Canary   # Permite forçar canary via header
+      # Promoção automática desabilitada
+      # Requer ação manual (ou AnalysisRun com sucesso)
+      autoPromotionEnabled: false
 
-      # Steps com análise automática
-      steps:
-        - setWeight: 5
-        - pause: {duration: 30s}
-        - analysis:
-            templates:
-              - templateName: success-rate  # Referência ao AnalysisTemplate
-            args:
-              - name: ingress-name
-                value: demo-app
-        - setWeight: 25
-        - pause: {duration: 1m}
-        - analysis:
-            templates:
-              - templateName: success-rate
-            args:
-              - name: ingress-name
-                value: demo-app
-        - setWeight: 50
-        - pause: {duration: 2m}
-        - setWeight: 100
+      # Análise ANTES da promoção
+      prePromotionAnalysis:
+        templates:
+          - templateName: smoke-test-bluegreen
+        args:
+          - name: preview-service
+            value: demo-app-preview
 
-      # Rollback automático configurado via AnalysisTemplate
-      # Se qualquer analysis falhar → rollback
+      # Análise DEPOIS da promoção — versão do success-rate da Aula 07
+      # adaptada pro blue-green (sem filtro de canary)
+      postPromotionAnalysis:
+        templates:
+          - templateName: success-rate-active
+        args:
+          - name: ingress-name   # mesmo motivo da Aula 07: não é "demo-app"
+            value: demo-app      # fixo, o Nginx exporta o nome já renomeado
+
+      # Delay antes de fazer scale down da versão antiga
+      # Permite rollback rápido durante este período
+      scaleDownDelaySeconds: 300   # 5 minutos
+
+      # Manter a ReplicaSet antiga após promoção
+      scaleDownDelayRevisionLimit: 1
+
+      # Anti-affinity: pods blue e green em nodes diferentes
+      antiAffinity:
+        preferredDuringSchedulingIgnoredDuringExecution:
+          weight: 100

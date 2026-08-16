@@ -1,0 +1,42 @@
+# base/analysis-smoke-test.yaml
+# AnalysisTemplate para smoke test na versão preview
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: smoke-test-bluegreen
+spec:
+  args:
+    - name: preview-service
+  metrics:
+    - name: smoke-test
+      count: 1
+      # Job-based analysis: roda um Job para validar
+      provider:
+        job:
+          spec:
+            template:
+              spec:
+                containers:
+                  - name: smoke-test
+                    image: curlimages/curl:latest
+                    command:
+                      - /bin/sh
+                      - -c
+                      - |
+                        echo "Testing preview service..."
+                        for i in $(seq 1 10); do
+                          # Sem domínio — o Job roda no mesmo namespace do
+                          # Service (dev, staging ou prod conforme o overlay),
+                          # e o DNS search domain resolve o nome curto ali
+                          STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+                            http://{{args.preview-service}})
+                          if [ "$STATUS" != "200" ]; then
+                            echo "FAILED: Got status $STATUS on attempt $i"
+                            exit 1
+                          fi
+                          echo "Attempt $i: OK (status $STATUS)"
+                          sleep 2
+                        done
+                        echo "All smoke tests passed!"
+                restartPolicy: Never
+            backoffLimit: 0
