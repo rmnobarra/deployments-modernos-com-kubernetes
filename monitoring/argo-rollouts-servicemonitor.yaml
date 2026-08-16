@@ -1,0 +1,18 @@
+# monitoring/argo-rollouts-servicemonitor.yaml
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: argo-rollouts
+  namespace: monitoring
+  labels:
+    release: monitoring       # label que o Prometheus procura
+spec:
+  namespaceSelector:
+    matchNames:
+      - argo-rollouts
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: argo-rollouts
+  endpoints:
+    - port: metrics
+      interval: 30s
