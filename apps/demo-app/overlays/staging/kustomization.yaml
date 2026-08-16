@@ -18,6 +18,11 @@ patches:
     target:
       kind: Rollout
       name: demo-app
+  - path: ingress-patch.yaml
+    target:
+      kind: Ingress
+      name: demo-app
+
 
 configMapGenerator:
   - name: demo-app-config
@@ -25,3 +30,28 @@ configMapGenerator:
       - LOG_LEVEL=info
       - ENVIRONMENT=staging
       - FEATURE_FLAG_NEW_UI=true
+
+replacements:
+  - source: {kind: Service, name: demo-app-stable, fieldPath: metadata.name}
+    targets:
+      - select: {kind: Rollout}
+        fieldPaths:
+          - spec.strategy.canary.stableService
+  - source: {kind: Service, name: demo-app-canary, fieldPath: metadata.name}
+    targets:
+      - select: {kind: Rollout}
+        fieldPaths:
+          - spec.strategy.canary.canaryService
+          - spec.strategy.canary.steps.2.analysis.args.0.value
+          - spec.strategy.canary.steps.5.analysis.args.0.value
+  - source: {kind: Ingress, name: demo-app, fieldPath: metadata.name}
+    targets:
+      - select: {kind: Rollout}
+        fieldPaths:
+          - spec.strategy.canary.trafficRouting.nginx.stableIngress
+  - source: {kind: AnalysisTemplate, name: success-rate, fieldPath: metadata.name}
+    targets:
+      - select: {kind: Rollout}
+        fieldPaths:
+          - spec.strategy.canary.steps.2.analysis.templates.0.templateName
+          - spec.strategy.canary.steps.5.analysis.templates.0.templateName

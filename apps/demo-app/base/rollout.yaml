@@ -41,12 +41,43 @@ spec:
             limits:
               cpu: 200m
               memory: 256Mi
-  strategy:                          # bloco NOVO — não existe em Deployment
+  strategy:
     canary:
+      # Services para traffic split — nomes da BASE; o overlay corrige com
+      # namePrefix via replacements:, mais abaixo
+      canaryService: demo-app-canary
+      stableService: demo-app-stable
+
+      # Traffic management via Nginx Ingress
+      trafficRouting:
+        nginx:
+          stableIngress: demo-app       # nome do Ingress da base
+          # Argo Rollouts cria automaticamente um Ingress canary
+          # com annotation nginx.ingress.kubernetes.io/canary-weight
+          additionalIngressAnnotations:
+            canary-by-header: X-Canary   # Permite forçar canary via header
+
+      # Steps com análise automática
       steps:
-        - setWeight: 10
+        - setWeight: 5
+        - pause: {duration: 30s}
+        - analysis:
+            templates:
+              - templateName: success-rate  # Referência ao AnalysisTemplate
+            args:
+              - name: service-name
+                value: demo-app-canary
+        - setWeight: 25
+        - pause: {duration: 1m}
+        - analysis:
+            templates:
+              - templateName: success-rate
+            args:
+              - name: service-name
+                value: demo-app-canary
+        - setWeight: 50
         - pause: {duration: 2m}
-        - setWeight: 30
-        - pause: {duration: 2m}
-        - setWeight: 60
-        - pause: {duration: 2m}
+        - setWeight: 100
+
+      # Rollback automático configurado via AnalysisTemplate
+      # Se qualquer analysis falhar → rollback

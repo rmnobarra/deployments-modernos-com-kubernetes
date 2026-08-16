@@ -7,6 +7,10 @@ kind: Kustomization
 resources:
   - rollout.yaml
   - service.yaml
+  - service-stable.yaml
+  - service-canary.yaml
+  - ingress.yaml
+  - analysis-template.yaml
 
 # Labels comuns aplicadas a TODOS os recursos.
 # ATENÇÃO: `commonLabels` está deprecado desde o Kustomize v5. Use `labels`.

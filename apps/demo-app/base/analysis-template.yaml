@@ -1,0 +1,62 @@
+# base/analysis-template.yaml
+# Template de análise que valida o canary baseado em métricas Prometheus
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: success-rate
+spec:
+  args:
+    - name: service-name
+      # Recebe o nome do service canary como argumento
+  metrics:
+    - name: success-rate
+      # Intervalo entre medições
+      interval: 30s
+      # Número mínimo de medições antes de concluir
+      count: 5
+      # Número de falhas toleradas
+      failureLimit: 1
+      # Critério de sucesso: success rate > 95%
+      successCondition: result[0] >= 0.95
+      # Critério de falha: success rate < 90%
+      failureCondition: result[0] < 0.90
+      provider:
+        prometheus:
+          address: http://monitoring-kube-prometheus-prometheus.monitoring.svc.cluster.local:9090
+          query: |
+            sum(rate(
+              nginx_ingress_controller_requests{
+                ingress="demo-app",
+                service="{{args.service-name}}",
+                status=~"[23].."
+              }[2m]
+            )) /
+            sum(rate(
+              nginx_ingress_controller_requests{
+                ingress="demo-app",
+                service="{{args.service-name}}"
+              }[2m]
+            ))
+    
+    - name: latency-p99
+      interval: 30s
+      count: 5
+      failureLimit: 1
+      # Sucesso: P99 abaixo de meio segundo
+      successCondition: result[0] < 0.5
+      # Falha: P99 no dobro disso ou mais. Entre 0.5 e 1.0 fica uma zona
+      # cinzenta de propósito — nem conta como sucesso limpo nem gasta o
+      # failureLimit, só uma medição realmente ruim decide a falha.
+      failureCondition: result[0] >= 1.0
+      provider:
+        prometheus:
+          address: http://monitoring-kube-prometheus-prometheus.monitoring.svc.cluster.local:9090
+          query: |
+            histogram_quantile(0.99,
+              sum(rate(
+                nginx_ingress_controller_request_duration_seconds_bucket{
+                  ingress="demo-app",
+                  service="{{args.service-name}}"
+                }[2m]
+              )) by (le)
+            )

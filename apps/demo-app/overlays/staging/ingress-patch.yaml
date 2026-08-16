@@ -1,0 +1,4 @@
+# overlays/dev/ingress-patch.yaml
+- op: replace
+  path: /spec/rules/0/host
+  value: staging.demo-app.local

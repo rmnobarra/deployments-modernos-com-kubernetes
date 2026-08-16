@@ -1,0 +1,19 @@
+# monitoring/nginx-ingress-servicemonitor.yaml
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: nginx-ingress
+  namespace: monitoring
+  labels:
+    release: monitoring    # label que o Prometheus usa para descobrir ServiceMonitors
+spec:
+  namespaceSelector:
+    matchNames:
+      - ingress-nginx
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: ingress-nginx
+      app.kubernetes.io/component: controller
+  endpoints:
+    - port: metrics
+      interval: 15s

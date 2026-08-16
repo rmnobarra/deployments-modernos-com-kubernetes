@@ -1,0 +1,14 @@
+# base/service-stable.yaml e service-canary.yaml — dois
+# Services novos. O service.yaml da Aula 03 continua existindo (apex,
+# aponta pra todos os pods); estes dois são exclusivos do traffic split.
+apiVersion: v1
+kind: Service
+metadata:
+  name: demo-app-canary
+spec:
+  selector:
+    app: demo-app
+  ports:
+    - port: 80
+      targetPort: 80
+      name: http

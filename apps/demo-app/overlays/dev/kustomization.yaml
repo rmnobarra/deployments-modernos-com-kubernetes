@@ -24,6 +24,10 @@ patches:
     target:
       kind: Rollout
       name: demo-app
+  - path: ingress-patch.yaml
+    target:
+      kind: Ingress
+      name: demo-app
 
 # ConfigMap gerado pelo Kustomize a partir de literais.
 # O generator adiciona um sufixo de hash ao nome (demo-app-config-t9fk2m6d8b):
@@ -39,3 +43,32 @@ configMapGenerator:
 images:
   - name: rmnobarra/gitops-demo
     newTag: "1.0.0"
+
+# overlays/dev/kustomization.yaml — acrescenta isto ao que já
+# existe (patches: da Aula 06). Os índices steps.2 e steps.5 são os dois
+# blocos de analysis na lista de steps acima — se você reordenar ou
+# adicionar um step antes deles, atualize os índices aqui também.
+replacements:
+  - source: {kind: Service, name: demo-app-stable, fieldPath: metadata.name}
+    targets:
+      - select: {kind: Rollout}
+        fieldPaths:
+          - spec.strategy.canary.stableService
+  - source: {kind: Service, name: demo-app-canary, fieldPath: metadata.name}
+    targets:
+      - select: {kind: Rollout}
+        fieldPaths:
+          - spec.strategy.canary.canaryService
+          - spec.strategy.canary.steps.2.analysis.args.0.value
+          - spec.strategy.canary.steps.5.analysis.args.0.value
+  - source: {kind: Ingress, name: demo-app, fieldPath: metadata.name}
+    targets:
+      - select: {kind: Rollout}
+        fieldPaths:
+          - spec.strategy.canary.trafficRouting.nginx.stableIngress
+  - source: {kind: AnalysisTemplate, name: success-rate, fieldPath: metadata.name}
+    targets:
+      - select: {kind: Rollout}
+        fieldPaths:
+          - spec.strategy.canary.steps.2.analysis.templates.0.templateName
+          - spec.strategy.canary.steps.5.analysis.templates.0.templateName

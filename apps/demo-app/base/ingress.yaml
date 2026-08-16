@@ -1,0 +1,21 @@
+# base/ingress.yaml — a Aula 03 nunca criou um; entra agora,
+# porque é ele quem o Nginx usa pra fazer o split real de tráfego
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: demo-app
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: demo-app.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: demo-app-stable    # Aponta para o stable service
+                port:
+                  number: 80
