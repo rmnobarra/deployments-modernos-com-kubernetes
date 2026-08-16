@@ -13,6 +13,12 @@ spec:
       interval: 30s
       count: 5
       failureLimit: 1
+      # Tolera medições sem tráfego canary suficiente (0/0 = NaN, nem sucesso
+      # nem falha) sem abortar a análise inteira — comum em steps de peso
+      # baixo (5%), onde uma janela de 2min pode legitimamente não pegar
+      # nenhum request. Default é 0: a PRIMEIRA medição inconclusiva já
+      # encerraria a métrica.
+      inconclusiveLimit: 2
       successCondition: result[0] >= 0.95
       failureCondition: result[0] < 0.90
       provider:
@@ -38,6 +44,9 @@ spec:
       interval: 30s
       count: 5
       failureLimit: 1
+      # Mesmo motivo do success-rate: histogram_quantile de um histograma
+      # sem nenhum bucket incrementado na janela também vira NaN.
+      inconclusiveLimit: 2
       successCondition: result[0] < 0.5
       failureCondition: result[0] >= 1.0
       provider:
