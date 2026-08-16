@@ -71,7 +71,7 @@ spec:
 
       # Delay antes de fazer scale down da versão antiga
       # Permite rollback rápido durante este período
-      scaleDownDelaySeconds: 300   # 5 minutos
+      scaleDownDelaySeconds: 60   # 5 minutos
 
       # Manter a ReplicaSet antiga após promoção
       scaleDownDelayRevisionLimit: 1
