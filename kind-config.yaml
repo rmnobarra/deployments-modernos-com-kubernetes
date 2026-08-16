@@ -26,5 +26,11 @@ nodes:
       - containerPort: 30443
         hostPort: 30443
         protocol: TCP
+      # NodePort do Grafana (Aula 07) - sem isto, http://localhost:31000
+      # nunca responde; kubectl port-forward é o fallback pro cluster atual,
+      # que já foi criado sem esta porta mapeada
+      - containerPort: 31000
+        hostPort: 31000
+        protocol: TCP
   - role: worker
   - role: worker
