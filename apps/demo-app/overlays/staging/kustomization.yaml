@@ -14,7 +14,7 @@ labels:
       environment: staging
 
 patches:
-  - path: deployment-patch.yaml
+  - path: rollout-patch.yaml
     target:
       kind: Deployment
       name: demo-app

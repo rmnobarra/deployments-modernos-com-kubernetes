@@ -20,7 +20,7 @@ labels:
 # última ocorrência e os patches anteriores são silenciosamente descartados.
 # Todos os patches do overlay ficam em UM único bloco.
 patches:
-  - path: deployment-patch.yaml
+  - path: rollout-patch.yaml
     target:
       kind: Deployment
       name: demo-app

@@ -5,7 +5,7 @@ kind: Kustomization
 
 # Recursos que fazem parte desta base
 resources:
-  - deployment.yaml
+  - rollout.yaml
   - service.yaml
 
 # Labels comuns aplicadas a TODOS os recursos.

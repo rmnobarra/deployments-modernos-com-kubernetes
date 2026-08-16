@@ -20,7 +20,7 @@ labels:
 
 # Aponta para o arquivo de patch criado acima
 patches:
-  - path: deployment-patch.yaml
+  - path: rollout-patch.yaml
     target:
       kind: Deployment
       name: demo-app

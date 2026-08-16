@@ -1,0 +1,13 @@
+# overlays/dev/rollout-patch.yaml — era deployment-patch.yaml, agora JSON6902
+- op: replace
+  path: /spec/replicas
+  value: 1
+- op: replace
+  path: /spec/template/spec/containers/0/resources
+  value:
+    requests:
+      cpu: 250m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
