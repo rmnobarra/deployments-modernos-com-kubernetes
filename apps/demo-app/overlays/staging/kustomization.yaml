@@ -16,7 +16,7 @@ labels:
 patches:
   - path: rollout-patch.yaml
     target:
-      kind: Deployment
+      kind: Rollout
       name: demo-app
 
 configMapGenerator:
