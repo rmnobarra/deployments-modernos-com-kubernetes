@@ -1,5 +1,15 @@
 # base/analysis-smoke-test.yaml
-# AnalysisTemplate para smoke test na versão preview
+#
+# prePromotionAnalysis — roda ANTES do promote, contra o Service `preview`
+# (a versão nova, ainda isolada, sem tráfego de usuário real). Se falhar,
+# o Rollout nunca chega a virar o `active` pra versão nova: é o gate que
+# decide se a versão green está apta a virar produção.
+#
+# Diferente do success-rate-active (que mede tráfego real via Prometheus),
+# este é um teste ATIVO: o próprio Job gera o tráfego de teste, com curl.
+# Faz sentido aqui porque antes da promoção não existe tráfego de usuário
+# nenhum caindo no preview — a única forma de saber se ele responde é
+# perguntar diretamente.
 apiVersion: argoproj.io/v1alpha1
 kind: AnalysisTemplate
 metadata:
@@ -9,8 +19,12 @@ spec:
     - name: preview-service
   metrics:
     - name: smoke-test
+      # count: 1 porque a métrica inteira É o Job — não tem "medições
+      # repetidas" como no Prometheus, o resultado é binário: o Job passou
+      # (exit 0) ou falhou (exit 1 / timeout).
       count: 1
-      # Job-based analysis: roda um Job para validar
+      # Job-based analysis: em vez de perguntar a um provider de métricas,
+      # o Argo Rollouts sobe um Job de verdade e olha o exit code dele.
       provider:
         job:
           spec:
@@ -38,5 +52,9 @@ spec:
                           sleep 2
                         done
                         echo "All smoke tests passed!"
+                # restartPolicy: Never + backoffLimit: 0 — se falhar, falha
+                # de vez. Não faz sentido o Kubernetes tentar de novo um
+                # smoke test: se o preview não respondeu 200 agora, tentar
+                # de novo no mesmo segundo não muda o resultado.
                 restartPolicy: Never
             backoffLimit: 0

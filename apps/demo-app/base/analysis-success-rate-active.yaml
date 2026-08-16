@@ -1,6 +1,17 @@
 # base/analysis-success-rate-active.yaml
-# Versão do success-rate da Aula 07 adaptada pro blue-green: sem filtro de
-# canary, porque o Ingress active nunca mistura duas versões.
+#
+# postPromotionAnalysis — roda DEPOIS do promote, contra o Service `active`
+# (a versão nova já recebendo 100% do tráfego real de produção). Se falhar,
+# não impede a promoção (já aconteceu), mas é o sinal de "isso não devia
+# ter ido pra produção" — em conjunto com scaleDownDelaySeconds, ainda dá
+# pra fazer `kubectl argo rollouts undo` com a versão antiga de pé.
+#
+# Diferente do smoke-test-bluegreen (que gera o próprio tráfego de teste),
+# este mede tráfego REAL vindo de usuários de verdade — por isso depende de
+# alguém estar batendo no Ingress (scripts/curl-bluegreen.sh traffic start,
+# ou tráfego de produção de verdade). Versão do success-rate da Aula 07
+# adaptada pro blue-green: sem filtro de canary, porque o Ingress active
+# nunca mistura duas versões — 100% do tráfego é sempre da mesma.
 apiVersion: argoproj.io/v1alpha1
 kind: AnalysisTemplate
 metadata:
@@ -9,9 +20,14 @@ spec:
   args:
     - name: ingress-name
   metrics:
+    # Proporção de requests bem-sucedidos (2xx/3xx) sobre o total, excluindo
+    # 4xx do cálculo — erro de cliente não é sintoma da versão no ar.
     - name: success-rate
+      # A cada 30s, por 5 rodadas = 2,5min de observação total.
       interval: 30s
       count: 5
+      # Uma medição ruim (abaixo de 90%) já é suficiente pra reprovar —
+      # não espera acumular várias falhas.
       failureLimit: 1
       # Mesma tolerância da Aula 07: se a query bater numa janela sem
       # tráfego (denominador 0, resultado NaN), não bate nem com
@@ -20,6 +36,8 @@ spec:
       # mas depende do gerador estar rodando o tempo todo; sem essa
       # tolerância, um único hiccup do gerador já abortava a análise.
       inconclusiveLimit: 2
+      # >= 95% fecha a métrica como sucesso; < 90% já reprova; entre os
+      # dois é zona cinzenta (Inconclusive) — tolerada pelo inconclusiveLimit.
       successCondition: result[0] >= 0.95
       failureCondition: result[0] < 0.90
       provider:
@@ -39,11 +57,15 @@ spec:
               }[2m]
             ))
 
+    # Latência P99 dos requests bem-sucedidos, mesmo recorte de tráfego e
+    # mesma janela da success-rate acima.
     - name: latency-p99
       interval: 30s
       count: 5
       failureLimit: 1
       inconclusiveLimit: 2
+      # < 0,5s fecha como sucesso; >= 1s reprova; entre os dois, zona
+      # cinzenta de propósito — só uma medição bem ruim decide a falha.
       successCondition: result[0] < 0.5
       failureCondition: result[0] >= 1.0
       provider:
