@@ -1,0 +1,4 @@
+# overlays/prod/ingress-active-patch.yaml
+- op: replace
+  path: /spec/rules/0/host
+  value: prod.demo-app.local

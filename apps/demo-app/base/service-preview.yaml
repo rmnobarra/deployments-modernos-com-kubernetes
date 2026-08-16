@@ -1,0 +1,13 @@
+# base/service-preview.yaml — NOVO. O service.yaml da Aula 03
+# já existe e vira o active; não precisa renomear nem recriar.
+apiVersion: v1
+kind: Service
+metadata:
+  name: demo-app-preview
+spec:
+  selector:
+    app: demo-app
+  ports:
+    - port: 80
+      targetPort: http
+      name: http

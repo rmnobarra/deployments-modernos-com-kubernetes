@@ -1,0 +1,24 @@
+# base/ingress-active.yaml — NOVO. Em produção só existe UM host público
+# (o que o usuário real conhece); o Ingress aponta pro Service active, que
+# nunca muda de nome — só troca, por trás, qual ReplicaSet ele seleciona.
+# Diferente do Ingress da Aula 07: nenhuma anotação de canary, é passagem
+# direta pro Service active.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: demo-app
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: demo-app.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: demo-app       # o Service active
+                port:
+                  number: 80
