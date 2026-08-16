@@ -38,4 +38,4 @@ configMapGenerator:
 
 images:
   - name: rmnobarra/gitops-demo
-    newTag: "1.0.1"
+    newTag: "1.0.0"
