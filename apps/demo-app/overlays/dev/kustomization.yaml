@@ -35,3 +35,7 @@ configMapGenerator:
       - LOG_LEVEL=debug
       - ENVIRONMENT=development
       - FEATURE_FLAG_NEW_UI=true
+
+images:
+  - name: rmnobarra/gitops-demo
+    newTag: "1.0.1"
