@@ -1,0 +1,76 @@
+# infra/monitoring/dashboards/deploy-health.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: deploy-health-dashboard
+  namespace: monitoring
+  labels:
+    # O sidecar do Grafana varre ConfigMaps com esta label e importa
+    # o dashboard sozinho. Sem ela, nada acontece.
+    grafana_dashboard: "1"
+data:
+  deploy-health.json: |
+    {
+      "title": "Saúde dos Deployments",
+      "uid": "deploy-health",
+      "refresh": "10s",
+      "panels": [
+        {
+          "title": "Rollouts por fase",
+          "type": "stat",
+          "gridPos": {"h": 5, "w": 6, "x": 0, "y": 0},
+          "targets": [{
+            "expr": "sum(rollout_info) by (phase)",
+            "legendFormat": "{{phase}}"
+          }]
+        },
+        {
+          "title": "Taxa de erro do active",
+          "type": "timeseries",
+          "gridPos": {"h": 9, "w": 18, "x": 6, "y": 0},
+          "description": "Linha achatada = active saudável. Um salto no instante exato da promoção é o corte vertical do blue-green revelando um problema.",
+          "targets": [{
+            "expr": "sum(rate(nginx_ingress_controller_requests{ingress=~\"$ingress\",status=~\"5..\"}[2m])) / sum(rate(nginx_ingress_controller_requests{ingress=~\"$ingress\"}[2m])) * 100",
+            "legendFormat": "error rate %"
+          }],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percent",
+              "thresholds": {
+                "steps": [
+                  {"value": 0, "color": "green"},
+                  {"value": 1, "color": "yellow"},
+                  {"value": 5, "color": "red"}
+                ]
+              }
+            }
+          }
+        },
+        {
+          "title": "Latência P99 do active",
+          "type": "timeseries",
+          "gridPos": {"h": 8, "w": 12, "x": 0, "y": 9},
+          "targets": [{
+            "expr": "histogram_quantile(0.99, sum by (le) (rate(nginx_ingress_controller_request_duration_seconds_bucket{ingress=~\"$ingress\"}[2m])))",
+            "legendFormat": "p99"
+          }],
+          "fieldConfig": {"defaults": {"unit": "s"}}
+        },
+        {
+          "title": "Réplicas prontas vs desejadas",
+          "type": "timeseries",
+          "gridPos": {"h": 8, "w": 12, "x": 12, "y": 9},
+          "targets": [
+            {"expr": "sum by (name) (rollout_info_replicas_available)", "legendFormat": "{{name}} prontas"},
+            {"expr": "sum by (name) (rollout_info_replicas_desired)", "legendFormat": "{{name}} desejadas"}
+          ]
+        }
+      ],
+      "templating": {
+        "list": [{
+          "name": "ingress",
+          "type": "query",
+          "query": "label_values(nginx_ingress_controller_requests, ingress)"
+        }]
+      }
+    }
